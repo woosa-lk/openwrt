@@ -3,6 +3,29 @@
 
 UCIDEF_LEDS_CHANGED=0
 
+ucidef_set_led_blink() {
+	local cfg="led_$1"
+	local name=$2
+	local sysfs=$3
+	local delayon=$4
+	local delayoff=$5
+
+	uci -q get system.$cfg && return 0
+
+	uci batch <<EOF
+set system.$cfg='led'
+set system.$cfg.name='$name'
+set system.$cfg.sysfs='$sysfs'
+set system.$cfg.trigger='timer'
+set system.$cfg.delayon='$delayon'
+set system.$cfg.delayoff='$delayoff'
+set system.$cfg.default='0'
+
+EOF
+	UCIDEF_LEDS_CHANGED=1
+
+}
+
 ucidef_set_led_netdev() {
 	local cfg="led_$1"
 	local name=$2
@@ -18,6 +41,7 @@ set system.$cfg.sysfs='$sysfs'
 set system.$cfg.trigger='netdev'
 set system.$cfg.dev='$dev'
 set system.$cfg.mode='link tx rx'
+set system.$cfg.default='0'
 EOF
 	UCIDEF_LEDS_CHANGED=1
 }
@@ -37,6 +61,7 @@ set system.$cfg.sysfs='$sysfs'
 set system.$cfg.trigger='usbdev'
 set system.$cfg.dev='$dev'
 set system.$cfg.interval='50'
+set system.$cfg.default='0'
 EOF
 	UCIDEF_LEDS_CHANGED=1
 }
@@ -54,6 +79,7 @@ set system.$cfg='led'
 set system.$cfg.name='$name'
 set system.$cfg.sysfs='$sysfs'
 set system.$cfg.trigger='$trigger'
+set system.$cfg.default='0'
 EOF
 	UCIDEF_LEDS_CHANGED=1
 }
@@ -73,6 +99,7 @@ set system.$cfg.name='$name'
 set system.$cfg.sysfs='$sysfs'
 set system.$cfg.trigger='$trigger'
 set system.$cfg.port_mask='$port_mask'
+set system.$cfg.default='0'
 EOF
 	UCIDEF_LEDS_CHANGED=1
 }
@@ -116,6 +143,7 @@ set system.$cfg.minq='$minq'
 set system.$cfg.maxq='$maxq'
 set system.$cfg.offset='$offset'
 set system.$cfg.factor='$factor'
+set system.$cfg.default='0'
 EOF
 	UCIDEF_LEDS_CHANGED=1
 }
@@ -175,7 +203,7 @@ set network.lan.ifname='$ifname'
 set network.lan.force_link=1
 set network.lan.type='bridge'
 set network.lan.proto='static'
-set network.lan.ipaddr='192.168.1.1'
+set network.lan.ipaddr='192.168.1.251'
 set network.lan.netmask='255.255.255.0'
 set network.lan.ip6assign='60'
 EOF

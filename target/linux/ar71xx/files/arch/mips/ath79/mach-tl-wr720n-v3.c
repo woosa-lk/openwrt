@@ -23,11 +23,15 @@
 #include "machtypes.h"
 
 #define TL_WR720N_GPIO_LED_SYSTEM	27
-#define TL_WR720N_GPIO_BTN_RESET	11
-#define TL_WR720N_GPIO_BTN_SW1		18
-#define TL_WR720N_GPIO_BTN_SW2		20
+#define TL_WR720N_GPIO_LED_WLAN		11
+#define TL_WR720N_GPIO_LED_ETH1		13
+#define TL_WR720N_GPIO_LED_ETH0		17
+#define TL_WR720N_GPIO_BTN_RESET	15
+#define TL_WR720N_GPIO_BTN_SW1		14
+#define TL_WR720N_GPIO_BTN_SW2		16
+#define TL_WR720N_GPIO_BTN_SW3		1
 
-#define TL_WR720N_GPIO_USB_POWER	8
+//#define TL_WR720N_GPIO_USB_POWER	8
 
 #define TL_WR720N_KEYS_POLL_INTERVAL	20	/* msecs */
 #define TL_WR720N_KEYS_DEBOUNCE_INTERVAL	(3 * TL_WR720N_KEYS_POLL_INTERVAL)
@@ -46,6 +50,18 @@ static struct gpio_led tl_wr720n_leds_gpio[] __initdata = {
 		.name		= "tp-link:blue:system",
 		.gpio		= TL_WR720N_GPIO_LED_SYSTEM,
 		.active_low	= 1,
+	},{
+		.name		= "tp-link:blue:wlan",
+		.gpio		= TL_WR720N_GPIO_LED_WLAN,
+		.active_low	= 0,
+	},{
+		.name		= "tp-link:blue:eth1",
+		.gpio		= TL_WR720N_GPIO_LED_ETH1,
+		.active_low	= 1,
+	},{
+		.name		= "tp-link:blue:eth0",
+		.gpio		= TL_WR720N_GPIO_LED_ETH0,
+		.active_low	= 1,
 	},
 };
 
@@ -53,25 +69,33 @@ static struct gpio_keys_button tl_wr720n_gpio_keys[] __initdata = {
 	{
 		.desc		= "reset",
 		.type		= EV_KEY,
-		.code		= KEY_RESTART,
+		.code		= BTN_0,
 		.debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
 		.gpio		= TL_WR720N_GPIO_BTN_RESET,
 		.active_low	= 0,
-	}, {
-		.desc		= "sw1",
-		.type		= EV_KEY,
-		.code		= BTN_0,
-		.debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		= TL_WR720N_GPIO_BTN_SW1,
-		.active_low = 0,
-	}, {
-		.desc		= "sw2",
-		.type		= EV_KEY,
-		.code		= BTN_1,
-		.debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		= TL_WR720N_GPIO_BTN_SW2,
-		.active_low = 0,
-	}
+	},{
+                .desc           = "sw1",
+                .type           = EV_KEY,
+                .code           = BTN_1,
+                .debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
+                .gpio           = TL_WR720N_GPIO_BTN_SW1,
+                .active_low 	= 0,
+        },{
+                .desc           = "sw2",
+                .type           = EV_KEY,
+                .code           = BTN_2,
+                .debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
+                .gpio           = TL_WR720N_GPIO_BTN_SW2,
+                .active_low 	= 0,
+        },{
+                .desc           = "sw3",
+                .type           = EV_KEY,
+                .code           = BTN_3,
+                .debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
+                .gpio           = TL_WR720N_GPIO_BTN_SW3,
+                .active_low 	= 1,
+        }
+
 };
 
 static void __init tl_wr720n_v3_setup(void)
@@ -89,9 +113,9 @@ static void __init tl_wr720n_v3_setup(void)
 					ARRAY_SIZE(tl_wr720n_gpio_keys),
 					tl_wr720n_gpio_keys);
 
-	gpio_request_one(TL_WR720N_GPIO_USB_POWER,
-			GPIOF_OUT_INIT_HIGH | GPIOF_EXPORT_DIR_FIXED,
-			"USB power");
+//	gpio_request_one(TL_WR720N_GPIO_USB_POWER,
+//			GPIOF_OUT_INIT_HIGH | GPIOF_EXPORT_DIR_FIXED,
+//			"USB power");
 	ath79_register_usb();
 
 	ath79_init_mac(ath79_eth0_data.mac_addr, mac, 1);

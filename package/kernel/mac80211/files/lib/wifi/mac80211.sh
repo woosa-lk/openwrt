@@ -71,11 +71,11 @@ detect_mac80211() {
 		[ "$found" -gt 0 ] && continue
 
 		mode_band="g"
-		channel="11"
+		channel="8"
 		htmode=""
 		ht_capab=""
 
-		iw phy "$dev" info | grep -q 'Capabilities:' && htmode=HT20
+		iw phy "$dev" info | grep -q 'Capabilities:' && htmode=HT40
 		iw phy "$dev" info | grep -q '2412 MHz' || { mode_band="a"; channel="36"; }
 
 		vht_cap=$(iw phy "$dev" info | grep -c 'VHT Capabilities')
@@ -102,16 +102,12 @@ config wifi-device  radio$devidx
 	option hwmode	11${mode_band}
 $dev_id
 $ht_capab
-	# REMOVE THIS LINE TO ENABLE WIFI:
-	option disabled 1
-
 config wifi-iface
 	option device   radio$devidx
 	option network  lan
 	option mode     ap
-	option ssid     OpenWrt
+	option ssid     JoySince
 	option encryption none
-
 EOF
 	devidx=$(($devidx + 1))
 	done

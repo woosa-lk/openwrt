@@ -1,0 +1,18 @@
+#!/bash/sh
+#
+# Copyright (C) 2015 JoySince.com
+# wurobinson <wurobinson@joysince.com>
+# For JS9331 board
+uci add system button
+uci set system.@button[-1].button=BTN_0
+uci set system.@button[-1].action=released
+uci set system.@button[-1].handler='reboot'
+uci set system.@button[-1].min=0
+uci set system.@button[-1].max=3
+uci add system button
+uci set system.@button[-1].button=BTN_0
+uci set system.@button[-1].action=released
+uci set system.@button[-1].handler='jffs2reset -y && reboot'
+uci set system.@button[-1].min=5
+uci set system.@button[-1].max=30
+uci commit system

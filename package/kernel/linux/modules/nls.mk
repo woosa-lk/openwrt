@@ -143,8 +143,21 @@ endef
 define KernelPackage/nls-cp932/description
   Kernel module for NLS Codepage 932 (Japanese)
 endef
-
 $(eval $(call KernelPackage,nls-cp932))
+
+define KernelPackage/nls-cp936
+  SUBMENU:=Native Language Support
+  TITLE:=Codepage 936 (Simple Chinese)
+  KCONFIG:=CONFIG_NLS_CODEPAGE_936
+  FILES:=$(LINUX_DIR)/fs/nls/nls_cp936.ko
+  AUTOLOAD:=$(call AutoLoad,25,nls_cp936)
+  $(call AddDepends/nls)
+endef
+
+define KernelPackage/nls-cp936/description
+  Kernel module for NLS Codepage 936 (Simple Chinese)
+endef
+$(eval $(call KernelPackage,nls-cp936))
 
 
 define KernelPackage/nls-cp1250
