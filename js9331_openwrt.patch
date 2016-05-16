@@ -1,0 +1,350 @@
+--- openwrt_barri_test/package/base-files/files/etc/config/system	2016-03-13 20:08:03.159584806 +0800
++++ openwrt_barri_AR9331/package/base-files/files/etc/config/system	2015-04-05 21:47:55.566720266 +0800
+@@ -1,5 +1,5 @@
+ config system
+-	option hostname	OpenWrt
++	option hostname	JoySince
+ 	option timezone	UTC
+ 
+ config timeserver ntp
+--- openwrt_barri_test/package/base-files/files/etc/hotplug.d/button/00-button	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_barri_AR9331/package/base-files/files/etc/hotplug.d/button/00-button	2015-04-07 20:48:37.103648403 +0800
+@@ -0,0 +1,25 @@
++#!/bin/sh
++. /lib/functions.sh
++do_button () {
++        local button
++        local action
++        local handler
++        local min
++        local max
++ 
++        config_get button $1 button
++        config_get action $1 action
++        config_get handler $1 handler
++        config_get min $1 min
++        config_get max $1 max
++ 
++        [ "$ACTION" = "$action" -a "$BUTTON" = "$button" -a -n "$handler" ] && {
++                [ -z "$min" -o -z "$max" ] && eval $handler
++                [ -n "$min" -a -n "$max" ] && {
++                        [ $min -le $SEEN -a $max -ge $SEEN ] && eval $handler
++                }
++        }
++}
++ 
++config_load system
++config_foreach do_button button
+--- openwrt_barri_test/package/base-files/files/lib/functions/uci-defaults.sh	2016-03-13 20:08:03.191584891 +0800
++++ openwrt_barri_AR9331/package/base-files/files/lib/functions/uci-defaults.sh	2015-06-11 21:40:48.576117405 +0800
+@@ -3,6 +3,29 @@
+ 
+ UCIDEF_LEDS_CHANGED=0
+ 
++ucidef_set_led_blink() {
++	local cfg="led_$1"
++	local name=$2
++	local sysfs=$3
++	local delayon=$4
++	local delayoff=$5
++
++	uci -q get system.$cfg && return 0
++
++	uci batch <<EOF
++set system.$cfg='led'
++set system.$cfg.name='$name'
++set system.$cfg.sysfs='$sysfs'
++set system.$cfg.trigger='timer'
++set system.$cfg.delayon='$delayon'
++set system.$cfg.delayoff='$delayoff'
++set system.$cfg.default='0'
++
++EOF
++	UCIDEF_LEDS_CHANGED=1
++
++}
++
+ ucidef_set_led_netdev() {
+ 	local cfg="led_$1"
+ 	local name=$2
+@@ -18,6 +41,7 @@
+ set system.$cfg.trigger='netdev'
+ set system.$cfg.dev='$dev'
+ set system.$cfg.mode='link tx rx'
++set system.$cfg.default='0'
+ EOF
+ 	UCIDEF_LEDS_CHANGED=1
+ }
+@@ -37,6 +61,7 @@
+ set system.$cfg.trigger='usbdev'
+ set system.$cfg.dev='$dev'
+ set system.$cfg.interval='50'
++set system.$cfg.default='0'
+ EOF
+ 	UCIDEF_LEDS_CHANGED=1
+ }
+@@ -54,6 +79,7 @@
+ set system.$cfg.name='$name'
+ set system.$cfg.sysfs='$sysfs'
+ set system.$cfg.trigger='$trigger'
++set system.$cfg.default='0'
+ EOF
+ 	UCIDEF_LEDS_CHANGED=1
+ }
+@@ -73,6 +99,7 @@
+ set system.$cfg.sysfs='$sysfs'
+ set system.$cfg.trigger='$trigger'
+ set system.$cfg.port_mask='$port_mask'
++set system.$cfg.default='0'
+ EOF
+ 	UCIDEF_LEDS_CHANGED=1
+ }
+@@ -116,6 +143,7 @@
+ set system.$cfg.maxq='$maxq'
+ set system.$cfg.offset='$offset'
+ set system.$cfg.factor='$factor'
++set system.$cfg.default='0'
+ EOF
+ 	UCIDEF_LEDS_CHANGED=1
+ }
+@@ -175,7 +203,7 @@
+ set network.lan.force_link=1
+ set network.lan.type='bridge'
+ set network.lan.proto='static'
+-set network.lan.ipaddr='192.168.1.1'
++set network.lan.ipaddr='192.168.1.251'
+ set network.lan.netmask='255.255.255.0'
+ set network.lan.ip6assign='60'
+ EOF
+--- openwrt_barri_test/include/kernel-defaults.mk	2016-03-13 20:08:03.191584891 +0800
++++ openwrt_barri_AR9331/include/kernel-defaults.mk	2015-04-08 20:21:42.894270331 +0800
+@@ -113,7 +113,8 @@
+ 	$(call Kernel/SetNoInitramfs)
+ 	rm -rf $(KERNEL_BUILD_DIR)/modules
+ 	$(_SINGLE) [ -d $(LINUX_DIR)/user_headers ] || $(MAKE) $(KERNEL_MAKEOPTS) INSTALL_HDR_PATH=$(LINUX_DIR)/user_headers headers_install
+-	$(SH_FUNC) grep '=[ym]' $(LINUX_DIR)/.config | LC_ALL=C sort | md5s > $(LINUX_DIR)/.vermagic
++#	$(SH_FUNC) grep '=[ym]' $(LINUX_DIR)/.config | LC_ALL=C sort | md5s > $(LINUX_DIR)/.vermagic
++	echo "0114c71ed85677c9c1e4911437af4743" > $(LINUX_DIR)/.vermagic
+ endef
+ 
+ define Kernel/Configure/Initramfs
+--- openwrt_barri_test/feeds/luci/modules/base/root/etc/config/luci	2016-03-13 20:08:03.195584888 +0800
++++ openwrt_barri_AR9331/feeds/luci/modules/base/root/etc/config/luci	2015-03-07 14:05:03.020337376 +0800
+@@ -1,5 +1,5 @@
+ config core main
+-	option lang auto
++	option lang zh_cn
+ 	option mediaurlbase /luci-static/openwrt.org
+ 	option resourcebase /luci-static/resources
+ 	
+--- openwrt_barri_test/package/kernel/mac80211/files/lib/wifi/mac80211.sh	2016-03-13 20:08:03.195584888 +0800
++++ openwrt_barri_AR9331/package/kernel/mac80211/files/lib/wifi/mac80211.sh	2015-11-21 12:26:00.391901737 +0800
+@@ -71,11 +71,11 @@
+ 		[ "$found" -gt 0 ] && continue
+ 
+ 		mode_band="g"
+-		channel="11"
++		channel="8"
+ 		htmode=""
+ 		ht_capab=""
+ 
+-		iw phy "$dev" info | grep -q 'Capabilities:' && htmode=HT20
++		iw phy "$dev" info | grep -q 'Capabilities:' && htmode=HT40
+ 		iw phy "$dev" info | grep -q '2412 MHz' || { mode_band="a"; channel="36"; }
+ 
+ 		vht_cap=$(iw phy "$dev" info | grep -c 'VHT Capabilities')
+@@ -102,16 +102,12 @@
+ 	option hwmode	11${mode_band}
+ $dev_id
+ $ht_capab
+-	# REMOVE THIS LINE TO ENABLE WIFI:
+-	option disabled 1
+-
+ config wifi-iface
+ 	option device   radio$devidx
+ 	option network  lan
+ 	option mode     ap
+-	option ssid     OpenWrt
++	option ssid     JoySince
+ 	option encryption none
+-
+ EOF
+ 	devidx=$(($devidx + 1))
+ 	done
+--- openwrt_barri_test/target/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2016-03-13 20:08:03.195584888 +0800
++++ openwrt_barri_AR9331/target/linux/ar71xx/base-files/etc/uci-defaults/01_leds	2015-04-06 18:54:19.983924503 +0800
+@@ -312,6 +312,12 @@
+ 	ucidef_set_led_wlan "wlan2g" "WLAN2G" "tp-link:blue:wlan2g" "phy0tpt"
+ 	;;
+ 
++tl-wr720n-v3)
++	ucidef_set_led_netdev "lan" "LAN" "tp-link:blue:eth1" "eth1"
++	ucidef_set_led_netdev "wan" "WAN" "tp-link:blue:eth0" "eth0"
++	ucidef_set_led_netdev "wlan" "WLAN" "tp-link:blue:wlan" "wlan0"
++	ucidef_set_led_blink "system" "SYSTEM" "tp-link:blue:system" "1000" "1000" 	
++	;;
+ tl-wr741nd)
+ 	ucidef_set_led_netdev "wan" "WAN" "tp-link:green:wan" "eth1"
+ 	ucidef_set_led_switch "lan1" "LAN1" "tp-link:green:lan1" "switch0" "0x02"
+--- openwrt_barri_test/target/linux/ar71xx/base-files/etc/uci-defaults/10_js9331	1970-01-01 08:00:00.000000000 +0800
++++ openwrt_barri_AR9331/target/linux/ar71xx/base-files/etc/uci-defaults/10_js9331	2015-04-07 21:45:32.115621787 +0800
+@@ -0,0 +1,18 @@
++#!/bash/sh
++#
++# Copyright (C) 2015 JoySince.com
++# wurobinson <wurobinson@joysince.com>
++# For JS9331 board
++uci add system button
++uci set system.@button[-1].button=BTN_0
++uci set system.@button[-1].action=released
++uci set system.@button[-1].handler='reboot'
++uci set system.@button[-1].min=0
++uci set system.@button[-1].max=3
++uci add system button
++uci set system.@button[-1].button=BTN_0
++uci set system.@button[-1].action=released
++uci set system.@button[-1].handler='jffs2reset -y && reboot'
++uci set system.@button[-1].min=5
++uci set system.@button[-1].max=30
++uci commit system
+--- openwrt_barri_test/target/linux/ar71xx/files/arch/mips/ath79/mach-tl-wr720n-v3.c	2016-03-13 20:08:03.199584884 +0800
++++ openwrt_barri_AR9331/target/linux/ar71xx/files/arch/mips/ath79/mach-tl-wr720n-v3.c	2015-04-07 18:10:17.735722678 +0800
+@@ -23,11 +23,15 @@
+ #include "machtypes.h"
+ 
+ #define TL_WR720N_GPIO_LED_SYSTEM	27
+-#define TL_WR720N_GPIO_BTN_RESET	11
+-#define TL_WR720N_GPIO_BTN_SW1		18
+-#define TL_WR720N_GPIO_BTN_SW2		20
++#define TL_WR720N_GPIO_LED_WLAN		11
++#define TL_WR720N_GPIO_LED_ETH1		13
++#define TL_WR720N_GPIO_LED_ETH0		17
++#define TL_WR720N_GPIO_BTN_RESET	15
++#define TL_WR720N_GPIO_BTN_SW1		14
++#define TL_WR720N_GPIO_BTN_SW2		16
++#define TL_WR720N_GPIO_BTN_SW3		1
+ 
+-#define TL_WR720N_GPIO_USB_POWER	8
++//#define TL_WR720N_GPIO_USB_POWER	8
+ 
+ #define TL_WR720N_KEYS_POLL_INTERVAL	20	/* msecs */
+ #define TL_WR720N_KEYS_DEBOUNCE_INTERVAL	(3 * TL_WR720N_KEYS_POLL_INTERVAL)
+@@ -46,6 +50,18 @@
+ 		.name		= "tp-link:blue:system",
+ 		.gpio		= TL_WR720N_GPIO_LED_SYSTEM,
+ 		.active_low	= 1,
++	},{
++		.name		= "tp-link:blue:wlan",
++		.gpio		= TL_WR720N_GPIO_LED_WLAN,
++		.active_low	= 0,
++	},{
++		.name		= "tp-link:blue:eth1",
++		.gpio		= TL_WR720N_GPIO_LED_ETH1,
++		.active_low	= 1,
++	},{
++		.name		= "tp-link:blue:eth0",
++		.gpio		= TL_WR720N_GPIO_LED_ETH0,
++		.active_low	= 1,
+ 	},
+ };
+ 
+@@ -53,25 +69,33 @@
+ 	{
+ 		.desc		= "reset",
+ 		.type		= EV_KEY,
+-		.code		= KEY_RESTART,
++		.code		= BTN_0,
+ 		.debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
+ 		.gpio		= TL_WR720N_GPIO_BTN_RESET,
+ 		.active_low	= 0,
+-	}, {
+-		.desc		= "sw1",
+-		.type		= EV_KEY,
+-		.code		= BTN_0,
+-		.debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
+-		.gpio		= TL_WR720N_GPIO_BTN_SW1,
+-		.active_low = 0,
+-	}, {
+-		.desc		= "sw2",
+-		.type		= EV_KEY,
+-		.code		= BTN_1,
+-		.debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
+-		.gpio		= TL_WR720N_GPIO_BTN_SW2,
+-		.active_low = 0,
+-	}
++	},{
++                .desc           = "sw1",
++                .type           = EV_KEY,
++                .code           = BTN_1,
++                .debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
++                .gpio           = TL_WR720N_GPIO_BTN_SW1,
++                .active_low 	= 0,
++        },{
++                .desc           = "sw2",
++                .type           = EV_KEY,
++                .code           = BTN_2,
++                .debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
++                .gpio           = TL_WR720N_GPIO_BTN_SW2,
++                .active_low 	= 0,
++        },{
++                .desc           = "sw3",
++                .type           = EV_KEY,
++                .code           = BTN_3,
++                .debounce_interval = TL_WR720N_KEYS_DEBOUNCE_INTERVAL,
++                .gpio           = TL_WR720N_GPIO_BTN_SW3,
++                .active_low 	= 1,
++        }
++
+ };
+ 
+ static void __init tl_wr720n_v3_setup(void)
+@@ -89,9 +113,9 @@
+ 					ARRAY_SIZE(tl_wr720n_gpio_keys),
+ 					tl_wr720n_gpio_keys);
+ 
+-	gpio_request_one(TL_WR720N_GPIO_USB_POWER,
+-			GPIOF_OUT_INIT_HIGH | GPIOF_EXPORT_DIR_FIXED,
+-			"USB power");
++//	gpio_request_one(TL_WR720N_GPIO_USB_POWER,
++//			GPIOF_OUT_INIT_HIGH | GPIOF_EXPORT_DIR_FIXED,
++//			"USB power");
+ 	ath79_register_usb();
+ 
+ 	ath79_init_mac(ath79_eth0_data.mac_addr, mac, 1);
+--- openwrt_barri_test/target/linux/ar71xx/image/Makefile	2016-03-13 20:08:03.199584884 +0800
++++ openwrt_barri_AR9331/target/linux/ar71xx/image/Makefile	2015-04-05 21:44:52.650723721 +0800
+@@ -1202,7 +1202,7 @@
+ $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWA701NV2,tl-wa701nd-v2,TL-WA701ND-v2,ttyATH0,115200,0x07010002,1,4Mlzma))
+ $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR703,tl-wr703n-v1,TL-WR703N,ttyATH0,115200,0x07030101,1,4Mlzma))
+ $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR710,tl-wr710n-v1,TL-WR710N,ttyATH0,115200,0x07100001,1,8Mlzma))
+-$(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR720NV3,tl-wr720n-v3,TL-WR720N-v3,ttyATH0,115200,0x07200103,1,4Mlzma))
++$(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR720NV3,tl-wr720n-v3,TL-WR720N-v3,ttyATH0,115200,0x07200103,1,8Mlzma))
+ $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR740NV4,tl-wr740n-v4,TL-WR741ND-v4,ttyATH0,115200,0x07400004,1,4Mlzma))
+ $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR741NV4,tl-wr741nd-v4,TL-WR741ND-v4,ttyATH0,115200,0x07410004,1,4Mlzma))
+ $(eval $(call SingleProfile,TPLINK-LZMA,64kraw,TLWR743NV2,tl-wr743nd-v2,TL-WR741ND-v4,ttyATH0,115200,0x07430002,1,4Mlzma))
+--- openwrt_barri_test/package/kernel/linux/modules/nls.mk	2016-03-13 20:08:03.199584884 +0800
++++ openwrt_barri_AR9331/package/kernel/linux/modules/nls.mk	2016-03-13 20:07:57.759585072 +0800
+@@ -143,9 +143,22 @@
+ define KernelPackage/nls-cp932/description
+   Kernel module for NLS Codepage 932 (Japanese)
+ endef
+-
+ $(eval $(call KernelPackage,nls-cp932))
+ 
++define KernelPackage/nls-cp936
++  SUBMENU:=Native Language Support
++  TITLE:=Codepage 936 (Simple Chinese)
++  KCONFIG:=CONFIG_NLS_CODEPAGE_936
++  FILES:=$(LINUX_DIR)/fs/nls/nls_cp936.ko
++  AUTOLOAD:=$(call AutoLoad,25,nls_cp936)
++  $(call AddDepends/nls)
++endef
++
++define KernelPackage/nls-cp936/description
++  Kernel module for NLS Codepage 936 (Simple Chinese)
++endef
++$(eval $(call KernelPackage,nls-cp936))
++
+ 
+ define KernelPackage/nls-cp1250
+   SUBMENU:=Native Language Support
