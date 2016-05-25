@@ -1,0 +1,5 @@
+config CONFIG_GLOBALMEM
+	tristate "globalmem device driver"
+	help
+	This is a globalmem driver, for debugging kernel model.
+	If unsure, say N.
