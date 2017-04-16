@@ -1,0 +1,5 @@
+config CONFIG_WOOSA_INFRARED
+	tristate "support infrared driver"
+	help
+	This is a infrared driver, for debugging kernel model.
+	If unsure, say N.
